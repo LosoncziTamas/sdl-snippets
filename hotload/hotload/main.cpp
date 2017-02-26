@@ -27,7 +27,7 @@ inline time_t get_last_write_time(const char* file_name)
 
 bool load_app_dll(game_code* app_dll)
 {
-    const char* source_dll_path = "libhotload.so";
+    const char* source_dll_path = "game.so";
     time_t last_write_time = get_last_write_time(source_dll_path);
     
     if (app_dll->last_load_time >= last_write_time)
@@ -68,11 +68,9 @@ int main(void)
     bool quit = false;
     time_t last_write_time = 0;
 
-#if 0
     game_code app_dll;
     memset(&app_dll, 0, sizeof(game_code));
     bool loading_dll = true;
-#endif
     
     offscreen_buffer buffer = {};
     buffer.texture = SDL_CreateTexture(renderer,
@@ -110,14 +108,10 @@ int main(void)
                        0);
         
         SDL_RenderPresent(renderer);
-        
-        game_update(&buffer);
-        
-#if 0        
-        time_t write_time = get_last_write_time("libhotload.so");
+     
+        time_t write_time = get_last_write_time("game.so");
         if (write_time > last_write_time)
         {
-            printf("Changed\n");
             last_write_time = write_time;
             loading_dll = true;
         }
@@ -131,10 +125,8 @@ int main(void)
         }
         else if(app_dll.dll)
         {
-            app_dll.update(&game_memory);
+            app_dll.update(&buffer);
         }
-#endif
-        
     }
     
     SDL_DestroyWindow(window);
