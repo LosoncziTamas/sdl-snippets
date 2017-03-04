@@ -8,16 +8,16 @@
 #define SCREEN_WIDTH 640    
 #define SCREEN_HEIGHT 480
 
-typedef void (*game_update_fn)(offscreen_buffer* memory);
+typedef void (*game_update_fn)(Offscreen_Buffer* memory);
 
-struct game_code
+struct Game_Code
 {
     void *dll;
     time_t last_load_time;
     game_update_fn update;
 };
 
-inline time_t get_last_write_time(const char* file_name)
+inline time_t get_last_write_time(const char *file_name)
 {
     struct stat file_attrs;
     stat(file_name, &file_attrs);
@@ -25,10 +25,9 @@ inline time_t get_last_write_time(const char* file_name)
     return file_attrs.st_mtime;
 }
 
-bool load_app_dll(game_code* app_dll)
+bool load_app_dll(Game_Code* app_dll, const char *src_dll_path)
 {
-    const char* source_dll_path = "game.so";
-    time_t last_write_time = get_last_write_time(source_dll_path);
+    time_t last_write_time = get_last_write_time(src_dll_path);
     
     if (app_dll->last_load_time >= last_write_time)
     {
@@ -42,7 +41,7 @@ bool load_app_dll(game_code* app_dll)
             app_dll->dll = 0;
         }
     }
-    void *lib = dlopen(source_dll_path, RTLD_LOCAL | RTLD_LAZY);
+    void *lib = dlopen(src_dll_path, RTLD_LOCAL | RTLD_LAZY);
     if (!lib)
     {
         return false;
@@ -65,14 +64,14 @@ int main(void)
                                 &window,
                                 &renderer);
     SDL_Event event;
-    bool quit = false;
+    bool running = true;
     time_t last_write_time = 0;
 
-    game_code app_dll;
-    memset(&app_dll, 0, sizeof(game_code));
+    Game_Code app_dll = {};
     bool loading_dll = true;
+    const char *dll_path = "game.so";
     
-    offscreen_buffer buffer = {};
+    Offscreen_Buffer buffer = {};
     buffer.texture = SDL_CreateTexture(renderer,
                                 SDL_PIXELFORMAT_ARGB8888,
                                 SDL_TEXTUREACCESS_STREAMING,
@@ -84,7 +83,7 @@ int main(void)
     buffer.bytes_per_pixel = 4;
     buffer.bitmap_memory = malloc(buffer.width * buffer.height * buffer.bytes_per_pixel);
     
-    while(!quit)
+    while(running)
     {
         while (SDL_PollEvent(&event))
         {
@@ -92,7 +91,7 @@ int main(void)
             {
                 case SDL_QUIT:
                 {
-                    quit = true;
+                    running = false;
                 } break;
             }
         }
@@ -109,7 +108,8 @@ int main(void)
         
         SDL_RenderPresent(renderer);
      
-        time_t write_time = get_last_write_time("game.so");
+        time_t write_time = get_last_write_time(dll_path);
+        
         if (write_time > last_write_time)
         {
             last_write_time = write_time;
@@ -118,7 +118,7 @@ int main(void)
         
         if (loading_dll)
         {
-           if(load_app_dll(&app_dll))
+           if(load_app_dll(&app_dll, dll_path))
            {
                loading_dll = false;
            }

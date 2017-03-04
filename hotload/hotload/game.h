@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-struct offscreen_buffer
+struct Offscreen_Buffer
 {
     SDL_Texture *texture;
     void        *bitmap_memory;
@@ -12,6 +12,6 @@ struct offscreen_buffer
     int         bytes_per_pixel;
 };
 
-extern "C" void game_update(offscreen_buffer *buffer);
+extern "C" void game_update(Offscreen_Buffer *buffer);
 
 #endif
