@@ -5,16 +5,16 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-static bool running;
+static SDL_bool running;
 
-typedef struct Parallax {
-    SDL_Rect src_rect_1;
-    SDL_Rect src_rect_2;
-    SDL_Rect dst_rect_1;
-    SDL_Rect dst_rect_2;
-    int width;
-    int height;
-} Paralllax;
+struct Parallax {
+    SDL_Rect    src_rect_1;
+    SDL_Rect    src_rect_2;
+    SDL_Rect    dst_rect_1;
+    SDL_Rect    dst_rect_2;
+    int         width;
+    int         height;
+};
 
 void init_parallax(Parallax *parallax, int width, int height)
 {
@@ -51,27 +51,27 @@ void clip_horizontal_parallax(int start_pos, Parallax *parallax)
     parallax->src_rect_2.w = parallax->width - start_pos;
 }
 
-SDL_Surface *load_image(char *path, SDL_Surface *surface)
+SDL_Texture *load_image(const char *path, SDL_Renderer *renderer)
 {
-    SDL_Surface *optimized_surface = NULL;
-    SDL_Surface *loaded_surface = IMG_Load(path);
+    SDL_Surface *surface = IMG_Load(path);
     
-    if (loaded_surface == NULL)
+    if (surface == NULL)
     {
-        printf( "Unable to load image %s! SDL_image Error: %s\n", path, IMG_GetError() );
+        printf( "IMG_Load failed! SDL_image Error: %s\n", IMG_GetError() );
+        exit(1);
     }
-    else
+    
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    
+    if (texture == NULL)
     {
-        optimized_surface = SDL_ConvertSurface(loaded_surface, surface->format, NULL);
-        if( optimized_surface == NULL )
-        {
-            printf( "Unable to optimize image %s! SDL Error: %s\n", path, SDL_GetError());
-        }
-        
-        SDL_FreeSurface(loaded_surface);
+        printf( "CreateTextureFromSurface failed! SDL_image Error: %s\n", IMG_GetError() );
+        exit(1);
     }
+    
+    SDL_FreeSurface(surface);
 
-    return optimized_surface;
+    return texture;
 }
 
 int main(void)
@@ -85,32 +85,30 @@ int main(void)
                                           SCREEN_WIDTH,
                                           SCREEN_HEIGHT,
                                           SDL_WINDOW_RESIZABLE);
-    SDL_Surface *windowSurface;
     
-    if((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
-    {
-        windowSurface = SDL_GetWindowSurface(window);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window,
+                                                -1,
+                                                SDL_RENDERER_PRESENTVSYNC);
     
-    }
-    else
+    bool success = IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG;
+    if(!success)
     {
         printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
     }
     
-    SDL_Surface *background_1 = load_image("parallax_1.png", windowSurface);
-    SDL_Surface *background_2 = load_image("parallax_2.png", windowSurface);
-    SDL_Surface *background_3 = load_image("parallax_3.png", windowSurface);
+    SDL_Texture *background_texture_1 = load_image("parallax_1.png", renderer);
+    SDL_Texture *background_texture_2 = load_image("parallax_2.png", renderer);
+    SDL_Texture *foreground_texture = load_image("parallax_3.png", renderer);
 
     Parallax background = {};
     init_parallax(&background, SCREEN_WIDTH, SCREEN_HEIGHT);
     Parallax foreground = {};
     init_parallax(&foreground, SCREEN_WIDTH, SCREEN_HEIGHT);
     
-    running = true;
-    
+    running = SDL_TRUE;
+    SDL_bool down = SDL_FALSE;
     int foreground_pos = 0;
     int background_pos = 0;
-    SDL_bool down = SDL_FALSE;
     
     while (running)
     {
@@ -122,7 +120,7 @@ int main(void)
             {
                 case SDL_QUIT:
                 {
-                    running = false;
+                    running = SDL_FALSE;
                 } break;
                 case SDL_KEYDOWN:
                 {
@@ -143,26 +141,27 @@ int main(void)
             background_pos += 2;
             background_pos %= SCREEN_WIDTH;
             
-            printf("foreground: %d background: %d\n", foreground_pos, background_pos);
-            
             clip_horizontal_parallax(background_pos, &background);
             clip_horizontal_parallax(foreground_pos, &foreground);
         }
         
-        SDL_BlitSurface(background_1, NULL, windowSurface, NULL);
-        
-        SDL_BlitSurface(background_2, &background.src_rect_1, windowSurface, &background.dst_rect_1);
-        SDL_BlitSurface(background_2, &background.src_rect_2, windowSurface, &background.dst_rect_2);
-        
-        SDL_BlitSurface(background_3, &foreground.src_rect_1, windowSurface, &foreground.dst_rect_1);
-        SDL_BlitSurface(background_3, &foreground.src_rect_2, windowSurface, &foreground.dst_rect_2);
+        SDL_RenderCopy(renderer, background_texture_1, NULL, NULL);
 
-        SDL_UpdateWindowSurface(window);
+        SDL_RenderCopy(renderer, background_texture_2, &background.src_rect_1, &background.dst_rect_1);
+        SDL_RenderCopy(renderer, background_texture_2, &background.src_rect_2, &background.dst_rect_2);
+        
+        SDL_RenderCopy(renderer, foreground_texture, &foreground.src_rect_1, &foreground.dst_rect_1);
+        SDL_RenderCopy(renderer, foreground_texture, &foreground.src_rect_2, &foreground.dst_rect_2);
+        
+        SDL_RenderPresent(renderer);
     }
     
-    SDL_FreeSurface(background_1);
-    SDL_FreeSurface(background_2);
-    SDL_FreeSurface(background_3);
+    SDL_DestroyTexture(background_texture_1);
+    SDL_DestroyTexture(background_texture_2);
+    SDL_DestroyTexture(foreground_texture);
+    
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
     
     IMG_Quit();
     SDL_Quit();
