@@ -20,7 +20,9 @@ struct Game_Code
 inline time_t get_last_write_time(const char *file_name)
 {
     struct stat file_attrs;
-    stat(file_name, &file_attrs);
+    if (stat(file_name, &file_attrs) < 0) {
+        return 0;
+    }
     
     return file_attrs.st_mtime;
 }

@@ -11,7 +11,7 @@ extern "C" void game_update(Offscreen_Buffer *buffer)
             uint8_t blue = j;
             uint8_t green = i;
             
-            *pixel++ = ((green << 16) | blue);
+            *pixel++ = ((green << 24) | blue);
             
         }
         row += buffer->width * buffer->bytes_per_pixel;
