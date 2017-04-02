@@ -1,178 +1,113 @@
 #include <SDL2/SDL.h>
 #include <SDL2_image/SDL_image.h>
 
-#include "jsmn.h"
+#include "io.h"
+#include "atlas.h"
+#include "sprite.h"
 
-#define TOKEN_BUFFER_SIZE 512
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
 
-struct Frame
+float seconds_elapsed(Uint64 old, Uint64 current)
 {
-    char* name;
-    SDL_Rect src_rect;
-};
-
-struct Atlas
-{
-    int size;
-    char *file_name;
-    Frame *frames;
-};
-
-static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
-    if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
-        strncmp(json + tok->start, s, tok->end - tok->start) == 0) {
-        return 0;
-    }
-    return -1;
-}
-
-int convert_to_int(jsmntok_t* token, char* json_str)
-{
-    char *tmp = strndup(json_str + token->start, token->end - token->start);
-    int ret = atoi(tmp);
-    free(tmp);
-    
-    return ret;
-}
-
-char *read_file(const char* file_name)
-{
-    char *file_content = NULL;
-    SDL_RWops *file = SDL_RWFromFile(file_name, "r");
-    if (file)
-    {
-        Sint64 file_size = SDL_RWsize(file);
-        file_content = (char*) malloc(file_size + 1);
-        if(SDL_RWread(file, file_content, sizeof(char), file_size))
-        {
-            file_content[file_size] = '\0';
-        }
-        else
-        {
-            printf( "Error: Unable to read file! SDL Error: %s\n", SDL_GetError());
-            free(file_content);
-            file_content = NULL;
-        }
-        SDL_RWclose(file);
-    }
-    else
-    {
-        printf( "Error: Unable to open file! SDL Error: %s\n", SDL_GetError());
-    }
-    return file_content;
-}
-
-int count_frame_objects(jsmntok_t *tokens, int num_of_tokens, char *json_str)
-{
-    int ret = 0;
-    for (int i = 1; i < num_of_tokens; i++)
-    {
-        if (jsoneq(json_str, &tokens[i], "frame") == 0)
-        {
-            ++ret;
-        }
-    }
-    return ret;
-}
-
-Atlas *create_atlas_from_json(char *json)
-{
-    unsigned int n = TOKEN_BUFFER_SIZE;
-    jsmn_parser parser;
-    jsmn_init(&parser);
-    
-    jsmntok_t *tokens = (jsmntok_t*) malloc(sizeof(jsmntok_t) * n);
-    int ret = jsmn_parse(&parser,
-                         json,
-                         strlen(json),
-                         tokens,
-                         n);
-    
-    while (ret == JSMN_ERROR_NOMEM)
-    {
-        n = n * 2 + 1;
-        printf("Expand token buffer to %d", n);
-        
-        tokens = (jsmntok_t*) realloc(tokens, sizeof(jsmntok_t) * n);
-        
-        ret = jsmn_parse(&parser,
-                         json,
-                         strlen(json),
-                         tokens,
-                         n);
-    }
-    
-    if (ret == JSMN_ERROR_INVAL)
-    {
-        printf("Invalid JSON string.");
-    }
-    if (ret == JSMN_ERROR_PART)
-    {
-        printf("Truncated JSON string.");
-    }
-    
-    SDL_assert(tokens[0].type == JSMN_OBJECT);
-    
-    int num_of_frames = count_frame_objects(tokens, ret, json);
-
-    Atlas *atlas = (Atlas*) malloc(sizeof(Atlas));
-    Frame *frames = (Frame*) malloc(sizeof(Frame) * num_of_frames);
-    for (int i = 1, j = 0; i < ret; i++)
-    {
-        if (jsoneq(json, &tokens[i], "filename") == 0)
-        {
-            int name_len = tokens[i+1].end - tokens[i+1].start;
-            char *file_name = strndup(json + tokens[i+1].start, name_len);
-            
-            if(jsoneq(json, &tokens[i+2], "frame") == 0)
-            {
-                int x = convert_to_int(&tokens[i+5], json);
-                int y = convert_to_int(&tokens[i+7], json);
-                int w = convert_to_int(&tokens[i+9], json);
-                int h = convert_to_int(&tokens[i+11], json);
-                
-                SDL_Rect src_rect = {x, y, w, h};
-                Frame frame = {file_name, src_rect};
-                frames[j] = frame;
-                
-                i += 11;
-                j++;
-            }
-            else
-            {
-                printf("Unexpected key.");
-            }
-        }
-        if (jsoneq(json, &tokens[i], "image") == 0)
-        {
-            atlas->file_name = strndup(json + tokens[i+1].start, tokens[i+1].end - tokens[i+1].start);
-        }
-    }
-    
-    atlas->frames = frames;
-    atlas->size = num_of_frames;
-    
-    return atlas;
-}
-
-void destroy_atlas(Atlas* atlas)
-{
-    for (int i = 0; i < atlas->size; ++i)
-    {
-        Frame* f = &atlas->frames[i];
-        free(f->name);
-    }
-    free(atlas->frames);
-    free(atlas->file_name);
-    free(atlas);
+    return ((float)(current - old) / (float)(SDL_GetPerformanceFrequency()));
 }
 
 int main(void)
 {
+    SDL_Init(SDL_INIT_VIDEO);
+    
+    SDL_Window *window = SDL_CreateWindow("Spritesheet",
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SCREEN_WIDTH,
+                                          SCREEN_HEIGHT,
+                                          SDL_WINDOW_RESIZABLE);
+    
+    SDL_Renderer *renderer = SDL_CreateRenderer(window,
+                                                -1,
+                                                SDL_RENDERER_PRESENTVSYNC);
+    
+    bool success = IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG;
+        
+    if(!success)
+    {
+        printf( "SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError() );
+    }
+    
     char *json = read_file("player.json");
+    
     Atlas *atlas = create_atlas_from_json(json);
     
-    destroy_atlas(atlas);
+    SDL_Texture *spritesheet = load_image(atlas->file_name, renderer);
+    
+    Sprite *dead = create_sprite(0, 0, SDL_FALSE);
+    Sprite *shoot = create_sprite(3, 3, SDL_FALSE);
+    Sprite *jump = create_sprite(4, 4, SDL_FALSE);
+    Sprite *walk = create_sprite(1, 2, SDL_TRUE);
+    Sprite *won = create_sprite(5, 6, SDL_TRUE);
+    
+    SDL_Rect dst_1 = {0, 0, 128, 128};
+    SDL_Rect dst_2 = {128, 0, 128, 128};
+    SDL_Rect dst_3 = {256, 0, 128, 128};
+    SDL_Rect dst_4 = {384, 0, 128, 128};
+    SDL_Rect dst_5 = {512, 0, 128, 128};
+
+    Uint64 start_counter = SDL_GetPerformanceCounter();
+    Uint64 perf_count_freq = SDL_GetPerformanceFrequency();
+    float target_seconds_per_frame = 1.0f / 30.0f;
+
+    SDL_bool running = SDL_TRUE;
+
+    while (running)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+                case SDL_QUIT:
+                {
+                    running = SDL_FALSE;
+                } break;
+            }
+        }
+        
+        while (seconds_elapsed(start_counter, SDL_GetPerformanceCounter()) < target_seconds_per_frame);
+        
+        Uint64 end_counter = SDL_GetPerformanceCounter();
+        
+        float delta = (float)(end_counter - start_counter) / (float)perf_count_freq;
+        
+        update_sprite(walk, delta);
+        update_sprite(won, delta);
+        
+        SDL_SetRenderDrawColor(renderer, 128, 128, 128, 0);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, spritesheet, &atlas->frames[walk->start + walk->current_frame], &dst_1);
+        SDL_RenderCopy(renderer, spritesheet, &atlas->frames[won->start + won->current_frame], &dst_2);
+        SDL_RenderCopy(renderer, spritesheet, &atlas->frames[dead->start], &dst_3);
+        SDL_RenderCopy(renderer, spritesheet, &atlas->frames[shoot->start], &dst_4);
+        SDL_RenderCopy(renderer, spritesheet, &atlas->frames[jump->start], &dst_5);
+        SDL_RenderPresent(renderer);
+        
+        start_counter = end_counter;
+    }
+    
     free(json);
+    destroy_atlas(atlas);
+    SDL_DestroyTexture(spritesheet);
+    
+    free(dead);
+    free(shoot);
+    free(jump);
+    free(walk);
+    free(won);
+    
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    IMG_Quit();
+    SDL_Quit();
+    
     return 0;
 }
