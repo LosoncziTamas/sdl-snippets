@@ -54,20 +54,41 @@ static float seconds_elapsed(Uint64 old, Uint64 current)
     return ((float)(current - old) / (float)(SDL_GetPerformanceFrequency()));
 }
 
-void game_update(float delta, Game_Controller_Input *input)
+#define VELOCITY 100
+
+static SDL_Rect rectangle = {0, 0, 50, 50};
+
+void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *renderer)
 {
+    SDL_Rect test = rectangle;
+    
     if (input->up) {
-        printf("Up\n");
+        test.y -= delta * VELOCITY;
     }
     if (input->down) {
-        printf("Down\n");
+        test.y += delta * VELOCITY;
     }
     if (input->left) {
-        printf("Left\n");
+        test.x -= delta * VELOCITY;
     }
     if (input->right) {
-        printf("Right\n");
+        test.x += delta * VELOCITY;
     }
+    
+    if (test.x < 0 || test.x + test.w > SCREEN_WIDTH ||
+        test.y < 0 || test.y + test.h > SCREEN_HEIGHT) {
+        printf("Collision\n");
+    } else {
+        rectangle = test;
+    }
+    
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
+    
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &rectangle);
+    
+    SDL_RenderPresent(renderer);
 }
 
 
@@ -114,7 +135,7 @@ int main(void)
         Uint64 end_counter = SDL_GetPerformanceCounter();
         
         //pass renderer?
-        game_update(target_seconds_per_frame, &new_input);
+        game_update(target_seconds_per_frame, &new_input, renderer);
         
         double delta = ((double)(end_counter - start_counter) / (double)perf_count_freq);
         start_counter = end_counter;
