@@ -56,37 +56,72 @@ static float seconds_elapsed(Uint64 old, Uint64 current)
 
 #define VELOCITY 100
 
-static SDL_Rect rectangle = {0, 0, 50, 50};
+static SDL_bool jumping = SDL_FALSE;
+static SDL_bool walking = SDL_FALSE;
+
+static float gravity_x = 0;
+static float gravity_y = 100;
+
+struct Player
+{
+    float x;
+    float y;
+    float vel_x;
+    float vel_y;
+};
+
+static Player player = {50, 430, 0, 0};
 
 void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *renderer)
 {
-    SDL_Rect test = rectangle;
+    Player test = player;
+    if (input->up && !jumping)
+    {
+        jumping = SDL_TRUE;
+        test.vel_y = -100;
+    }
+    if (input->down)
+    {
+        walking = SDL_TRUE;
+        test.vel_y += delta * VELOCITY;
+    }
+    if (input->left)
+    {
+        walking = SDL_TRUE;
+        test.vel_x -= delta * VELOCITY;
+    }
+    if (input->right)
+    {
+        walking = SDL_TRUE;
+        test.vel_x += delta * VELOCITY;
+    }
     
-    if (input->up) {
-        test.y -= delta * VELOCITY;
-    }
-    if (input->down) {
-        test.y += delta * VELOCITY;
-    }
-    if (input->left) {
-        test.x -= delta * VELOCITY;
-    }
-    if (input->right) {
-        test.x += delta * VELOCITY;
+    if (jumping)
+    {
+        test.vel_x += delta * gravity_x;
+        test.vel_y += delta * gravity_y;
     }
     
-    if (test.x < 0 || test.x + test.w > SCREEN_WIDTH ||
-        test.y < 0 || test.y + test.h > SCREEN_HEIGHT) {
-        printf("Collision\n");
+    if (jumping || walking)
+    {
+        test.x += delta * test.vel_x;
+        test.y += delta * test.vel_y;
+    }
+    
+    if (test.x < 0 || test.x + 50 > SCREEN_WIDTH ||
+        test.y < 0 || test.y + 50 > SCREEN_HEIGHT) {
+        jumping = SDL_FALSE;
     } else {
-        rectangle = test;
+        player = test;
     }
+    
+    SDL_Rect player_rect = {(int)player.x, (int)player.y, 50, 50};
     
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
     
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderFillRect(renderer, &rectangle);
+    SDL_RenderFillRect(renderer, &player_rect);
     
     SDL_RenderPresent(renderer);
 }
