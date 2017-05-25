@@ -58,12 +58,6 @@ static float seconds_elapsed(Uint64 old, Uint64 current)
 #define TILES_PER_WIDTH 10
 #define TILES_PER_HEIGHT 10
 
-static SDL_bool jumping = SDL_FALSE;
-static SDL_bool walking = SDL_FALSE;
-
-static float gravity_x = 0;
-static float gravity_y = -100;
-
 struct World
 {
     int *tiles;
@@ -75,20 +69,12 @@ struct World
 
 struct Player
 {
-    float x;
-    float y;
-    float vel_x;
-    float vel_y;
-};
-
-struct Player_Position
-{
-    float abs_x;
-    float abs_y;
-    int x_tile_index;
-    int y_tile_index;
+    int tile_index_x;
+    int tile_index_y;
     float tile_rel_x;
     float tile_rel_y;
+    float vel_x;
+    float vel_y;
 };
 
 static int level[5][20] =
@@ -108,57 +94,14 @@ struct Game_State
     SDL_bool inited;
 };
 
-void update_player(float delta, Player *player, Game_Controller_Input *input)
-{
-    Player test = *player;
-    if (input->up && !jumping)
-    {
-        jumping = SDL_TRUE;
-        test.vel_y = 100;
-    }
-    if (input->down)
-    {
-        walking = SDL_TRUE;
-        test.vel_y -= delta * VELOCITY;
-    }
-    if (input->left)
-    {
-        walking = SDL_TRUE;
-        test.vel_x -= delta * VELOCITY;
-    }
-    if (input->right)
-    {
-        walking = SDL_TRUE;
-        test.vel_x += delta * VELOCITY;
-    }
-    
-    if (jumping)
-    {
-        test.vel_x += delta * gravity_x;
-        test.vel_y += delta * gravity_y;
-    }
-    
-    if (jumping || walking)
-    {
-        test.x += delta * test.vel_x;
-        test.y += delta * test.vel_y;
-    }
-    
-    if (test.x < 0 || test.x + 50 > SCREEN_WIDTH ||
-        test.y < 0 || test.y + 50 > SCREEN_HEIGHT) {
-        jumping = SDL_FALSE;
-        walking = SDL_FALSE;
-        player->vel_x = 0;
-        player->vel_y = 0;
-    } else {
-        *player = test;
-    }
-
-}
-
 void flip_rect(SDL_Rect *rect)
 {
     rect->y = SCREEN_HEIGHT - rect->y - rect->h;
+}
+
+void debug_player_pos(Player *player)
+{
+    printf("tile_x %d tile_y %d x %f y %f \n", player->tile_index_x, player->tile_index_y, player->tile_rel_x, player->tile_rel_y);
 }
 
 void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *renderer, Game_State *game_state)
@@ -169,7 +112,6 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
     int tile_width_in_pixel = 40;
     int tile_height_in_pixel = 40;
     
-    
     if (!game_state->inited)
     {
         world->count_x = 20;
@@ -177,8 +119,10 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
         world->tiles = (int*)level;
         world->tiles_per_width = 10;
         world->tiles_per_height = 10;
-        player->x = tile_width_in_pixel * 3;
-        player->y = tile_height_in_pixel * 3;
+        player->tile_rel_x = 0;
+        player->tile_rel_y = 0;
+        player->tile_index_x = 0;
+        player->tile_index_y = 0;
         game_state->inited = SDL_TRUE;
         
     }
@@ -187,31 +131,46 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
     
     if (input->left)
     {
-        test.x -= delta * VELOCITY;
+        test.tile_rel_x -= delta * VELOCITY;
     }
     if (input->right)
     {
-        test.x += delta * VELOCITY;
+        test.tile_rel_x += delta * VELOCITY;
     }
     if (input->up)
     {
-        test.y += delta * VELOCITY;
+        test.tile_rel_y += delta * VELOCITY;
     }
     if (input->down)
     {
-        test.y -= delta * VELOCITY;
+        test.tile_rel_y -= delta * VELOCITY;
     }
-    //tile bound check
+
+    if (test.tile_rel_y < 0) {
+        test.tile_index_y -= (test.tile_rel_y / tile_height_in_pixel) - 1;
+        test.tile_rel_y = tile_height_in_pixel - fmod(fabs(test.tile_rel_y), tile_height_in_pixel);
+    } else if(test.tile_rel_y > tile_height_in_pixel) {
+        test.tile_index_y -= (test.tile_rel_y / tile_height_in_pixel);
+        test.tile_rel_y = fmod(fabs(test.tile_rel_y), tile_height_in_pixel);
+    }
+    
+    if (test.tile_rel_x < 0) {
+        test.tile_index_x += (test.tile_rel_x / tile_width_in_pixel) - 1;
+        test.tile_rel_x = tile_width_in_pixel - fmod(fabs(test.tile_rel_x), tile_width_in_pixel);
+    } else if(test.tile_rel_x > tile_width_in_pixel) {
+        test.tile_index_x += (test.tile_rel_x / tile_width_in_pixel);
+        test.tile_rel_x = fmod(fabs(test.tile_rel_x), tile_width_in_pixel);
+    }
+    
+    debug_player_pos(player);
+    
     *player = test;
     
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     
-    int relx = (int)player->x;
-    int rely = (int)player->y;
-    
-    int center_tile_x = relx / tile_width_in_pixel;
-    int center_tile_y = world->count_y - rely / tile_height_in_pixel;
+    int center_tile_x = player->tile_index_x;
+    int center_tile_y = player->tile_index_y;
     
     int tile_range_x = world->tiles_per_width / 2;
     int tile_range_y = world->tiles_per_height / 2;
@@ -255,21 +214,21 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
                 flip_rect(&tile);
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
             }
-            if (y == center_tile_y - tile_range_y && x == center_tile_x - tile_range_x)
+            if (y == center_tile_y && x == center_tile_x)
             {
                 SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
 
             }
-            
             SDL_RenderFillRect(renderer, &tile);
         }
     }
     
     SDL_Rect player_rect = {
-        tile_width_in_pixel * 2,
-        (SCREEN_HEIGHT - (tile_height_in_pixel * 2)) - 50,
-        50,
-        50};
+        tile_range_x * tile_width_in_pixel + (int)player->tile_rel_x,
+        tile_range_y * tile_height_in_pixel + (int)player->tile_rel_y - tile_height_in_pixel,
+        10,
+        10};
+    flip_rect(&player_rect);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &player_rect);
     SDL_RenderPresent(renderer);
