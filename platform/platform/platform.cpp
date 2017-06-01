@@ -147,18 +147,18 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
     }
 
     if (test.tile_rel_y < 0) {
-        test.tile_index_y -= (test.tile_rel_y / tile_height_in_pixel) - 1;
+        test.tile_index_y -= (int)(test.tile_rel_y / tile_height_in_pixel) - 1;
         test.tile_rel_y = tile_height_in_pixel - fmod(fabs(test.tile_rel_y), tile_height_in_pixel);
-    } else if(test.tile_rel_y > tile_height_in_pixel) {
-        test.tile_index_y -= (test.tile_rel_y / tile_height_in_pixel);
+    } else if(test.tile_rel_y >= tile_height_in_pixel) {
+        test.tile_index_y -= (int) test.tile_rel_y / tile_height_in_pixel;
         test.tile_rel_y = fmod(fabs(test.tile_rel_y), tile_height_in_pixel);
     }
     
-    if (test.tile_rel_x < 0) {
-        test.tile_index_x += (test.tile_rel_x / tile_width_in_pixel) - 1;
+    if (test.tile_rel_x <= 0) {
+        test.tile_index_x += (int)(test.tile_rel_x / tile_width_in_pixel) - 1;
         test.tile_rel_x = tile_width_in_pixel - fmod(fabs(test.tile_rel_x), tile_width_in_pixel);
     } else if(test.tile_rel_x > tile_width_in_pixel) {
-        test.tile_index_x += (test.tile_rel_x / tile_width_in_pixel);
+        test.tile_index_x += (int)(test.tile_rel_x / tile_width_in_pixel);
         test.tile_rel_x = fmod(fabs(test.tile_rel_x), tile_width_in_pixel);
     }
     
