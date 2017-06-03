@@ -1,84 +1,11 @@
-#include <SDL2/SDL.h>
 #include <SDL2_ttf/SDL_ttf.h>
 
 #include "platform.h"
-
-#define SCREEN_WIDTH 960
-#define SCREEN_HEIGHT 540
-#define TARGET_UPDATE_HZ 30
-
-static SDL_bool SDL_eval(bool expr)
-{
-    return expr ? SDL_TRUE : SDL_FALSE;
-}
-
-struct Game_Controller_Input
-{
-    union
-    {
-        SDL_bool buttons[4];
-        struct
-        {
-            SDL_bool up;
-            SDL_bool down;
-            SDL_bool left;
-            SDL_bool right;
-        };
-    };
-    int32_t mouse_x;
-    int32_t mouse_y;
-};
-
-static SDL_bool handle_event(SDL_Event *event)
-{
-    switch (event->type)
-    {
-        case SDL_QUIT:
-        {
-            return SDL_FALSE;
-        }
-        case SDL_WINDOWEVENT:
-        {
-            switch(event->window.event)
-            {
-                case SDL_WINDOWEVENT_EXPOSED:
-                {
-                    printf("Redraw/n");
-                } break;
-            }
-        } break;
-    }
-
-    return SDL_TRUE;
-}
-
-static float seconds_elapsed(Uint64 old, Uint64 current)
-{
-    return ((float)(current - old) / (float)(SDL_GetPerformanceFrequency()));
-}
+#include "desktop.h"
 
 #define VELOCITY 100
 #define TILES_PER_WIDTH 10
 #define TILES_PER_HEIGHT 10
-
-struct World
-{
-    int *tiles;
-    int count_x;
-    int count_y;
-    int tiles_per_width;
-    int tiles_per_height;
-};
-
-struct Player
-{
-    int tile_index_x;
-    int tile_index_y;
-    float tile_rel_x;
-    float tile_rel_y;
-    float vel_x;
-    float vel_y;
-};
 
 static int level[5][20] =
 {
@@ -90,15 +17,8 @@ static int level[5][20] =
     0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0,
 };
 
-struct Game_State
-{
-    World world;
-    Player player;
-    SDL_bool inited;
-};
-
-
 TTF_Font *font;
+
 struct Text_Prop
 {
     const char *text;
@@ -179,6 +99,20 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
         player->tile_index_y = 4;
         game_state->inited = SDL_TRUE;
         
+        if (TTF_Init() == -1)
+        {
+            printf("TTF_Init: %s\n", TTF_GetError());
+            exit(2);
+        }
+        
+        font = TTF_OpenFont("Pixeled.ttf", 18);
+        
+        if (!font)
+        {
+            printf("TTF_OpenFont: %s\n", TTF_GetError());
+            exit(2);
+        }
+
     }
     
     Player test = *player;
@@ -276,79 +210,8 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &player_rect);
     display_debug_info(game_state, renderer, input);
-
-    
     SDL_RenderPresent(renderer);
 }
 
 
-int main(void)
-{
-    SDL_Init(SDL_INIT_VIDEO);
 
-    if (TTF_Init() == -1)
-    {
-        printf("TTF_Init: %s\n", TTF_GetError());
-        exit(2);
-    }
-    
-    font = TTF_OpenFont("Pixeled.ttf", 18);
-    
-    if (!font)
-    {
-        printf("TTF_OpenFont: %s\n", TTF_GetError());
-        exit(2);
-    }
-    
-    SDL_Window *window = SDL_CreateWindow("Platform",
-                                          SDL_WINDOWPOS_CENTERED_MASK,
-                                          SDL_WINDOWPOS_CENTERED_MASK,
-                                          SCREEN_WIDTH,
-                                          SCREEN_HEIGHT,
-                                          SDL_WINDOW_RESIZABLE);
-    
-    SDL_Renderer *renderer = SDL_CreateRenderer(window,
-                                                -1,
-                                                SDL_RENDERER_PRESENTVSYNC);
-    
-    SDL_bool running = SDL_TRUE;
-    
-    float target_seconds_per_frame = 1.0f / (float) TARGET_UPDATE_HZ;
-    Uint64 start_counter = SDL_GetPerformanceCounter();
-    Uint64 perf_count_freq = SDL_GetPerformanceFrequency();
-    
-    Game_Controller_Input new_input;
-    Game_State game_state = {};
-    
-    while(running)
-    {
-        SDL_Event event;
-        while(SDL_PollEvent(&event))
-        {
-            running = handle_event(&event);
-        }
-        
-        new_input = {};
-        const Uint8 *state = SDL_GetKeyboardState(NULL);
-        new_input.left = SDL_eval(state[SDL_SCANCODE_LEFT]);
-        new_input.down = SDL_eval(state[SDL_SCANCODE_DOWN]);
-        new_input.up = SDL_eval(state[SDL_SCANCODE_UP]);
-        new_input.right = SDL_eval(state[SDL_SCANCODE_RIGHT]);
-        
-        SDL_GetMouseState(&new_input.mouse_x, &new_input.mouse_y);
-
-        //TODO: measure SDL_delay
-        while (seconds_elapsed(start_counter, SDL_GetPerformanceCounter()) < target_seconds_per_frame);
-        Uint64 end_counter = SDL_GetPerformanceCounter();
-        
-        //pass renderer?
-        game_update(target_seconds_per_frame, &new_input, renderer, &game_state);
-        
-        double delta = ((double)(end_counter - start_counter) / (double)perf_count_freq);
-        start_counter = end_counter;
-    }
-    
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-}
