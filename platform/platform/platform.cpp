@@ -104,6 +104,15 @@ void debug_player_pos(Player *player)
     printf("tile_x %d tile_y %d x %f y %f \n", player->tile_index_x, player->tile_index_y, player->tile_rel_x, player->tile_rel_y);
 }
 
+int get_tile_value(int column, int row, World *world)
+{
+    if(column < 0 || column >= world->count_x || row < 0 || row >= world->count_y)
+    {
+        return -1;
+    }
+    return world->tiles[row * world->count_x + column];
+}
+
 void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *renderer, Game_State *game_state)
 {
     World *world = &game_state->world;
@@ -121,8 +130,8 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
         world->tiles_per_height = 10;
         player->tile_rel_x = 0;
         player->tile_rel_y = 0;
-        player->tile_index_x = 0;
-        player->tile_index_y = 0;
+        player->tile_index_x = 1;
+        player->tile_index_y = 4;
         game_state->inited = SDL_TRUE;
         
     }
@@ -172,60 +181,52 @@ void game_update(float delta, Game_Controller_Input *input, SDL_Renderer *render
     int center_tile_x = player->tile_index_x;
     int center_tile_y = player->tile_index_y;
     
-    int tile_range_x = world->tiles_per_width / 2;
-    int tile_range_y = world->tiles_per_height / 2;
+    float screen_center_x = world->tiles_per_width * (float)tile_width_in_pixel * 0.5f;
+    float screen_center_y = world->tiles_per_height * (float)tile_height_in_pixel * 0.5f;
+    
+    int tile_range_x = world->tiles_per_width;
+    int tile_range_y = world->tiles_per_height;
 
-    for (int y = center_tile_y - tile_range_y, j = world->count_y - 1 + tile_range_y;
-         y < center_tile_y + tile_range_y;
-         y++, j--)
+    for (int x = -tile_range_x; x < tile_range_x; x++)
     {
-        for (int x = center_tile_x - tile_range_x, i = 0; x < center_tile_x + tile_range_x; x++, i++)
+        for (int y = -tile_range_y; y < tile_range_y; y++)
         {
-            SDL_Rect tile = {};
-            if (x < 0 || x >= world->count_x || y < 0 || y >= world->count_y) {
-                tile = {
-                    i * tile_width_in_pixel,
-                    j * tile_height_in_pixel,
-                    tile_width_in_pixel,
-                    tile_height_in_pixel
-                };
-                flip_rect(&tile);
-                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-            }
-            else if (world->tiles[y * world->count_x + x] == 1)
+            SDL_Rect tile1 = {
+                (int)(screen_center_x - player->tile_rel_x + x * tile_width_in_pixel),
+                (int)(screen_center_y - player->tile_rel_y + y * tile_height_in_pixel),
+                tile_width_in_pixel,
+                tile_height_in_pixel
+            };
+            flip_rect(&tile1);
+            int column = player->tile_index_x + x;
+            int row = player->tile_index_y - y;
+            int value = get_tile_value(column, row, world);
+            if (value == 1)
             {
-                tile = {
-                    i * tile_width_in_pixel,
-                    j * tile_height_in_pixel,
-                    tile_width_in_pixel,
-                    tile_height_in_pixel
-                };
-                flip_rect(&tile);
                 SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+            }
+            else if(value == -1)
+            {
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
             }
             else
             {
-                tile = {
-                    i * tile_width_in_pixel,
-                    j * tile_height_in_pixel,
-                    tile_width_in_pixel,
-                    tile_height_in_pixel
-                };
-                flip_rect(&tile);
                 SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
             }
-            if (y == center_tile_y && x == center_tile_x)
+            
+            if (row == center_tile_y && column == center_tile_x)
             {
                 SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-
             }
-            SDL_RenderFillRect(renderer, &tile);
+            
+            SDL_RenderFillRect(renderer, &tile1);
+
         }
     }
     
     SDL_Rect player_rect = {
-        tile_range_x * tile_width_in_pixel + (int)player->tile_rel_x,
-        tile_range_y * tile_height_in_pixel + (int)player->tile_rel_y - tile_height_in_pixel,
+        (int)(screen_center_x),
+        (int)(screen_center_y),
         10,
         10};
     flip_rect(&player_rect);
