@@ -17,8 +17,9 @@ class FontManager {
 public:
     static void destroy();
     static void init();
-    static Font *getFont();
+    static Font *getFontBySize(int size);
 private:
+    static std::string defaultFontPath;
     static std::vector<Font*> fonts;
     FontManager() {}
 };

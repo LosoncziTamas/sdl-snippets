@@ -21,8 +21,8 @@ void Renderer::drawText(int x, int y, const Texture &fontTexture) {
     SDL_RenderCopy(sdlRenderer, fontTexture.sdlTexture, NULL, &dstRect);
 }
 
-Texture Renderer::createTexture(const Font &font, const char *text, const SDL_Color &color) {
-    SDL_Surface *sdlSurface = TTF_RenderUTF8_Solid(font.sdlFont, text, color);
+Texture Renderer::createTexture(const Font *font, const char *text, const SDL_Color &color) {
+    SDL_Surface *sdlSurface = TTF_RenderUTF8_Solid(font->sdlFont, text, color);
     if (!sdlSurface)
     {
         throw SdlException(TTF_GetError());
@@ -33,7 +33,7 @@ Texture Renderer::createTexture(const Font &font, const char *text, const SDL_Co
         throw SdlException(SDL_GetError());
     }
     int w, h;
-    TTF_SizeUTF8(font.sdlFont, text, &w, &h);
+    TTF_SizeUTF8(font->sdlFont, text, &w, &h);
     return Texture(*sdlTexture, w, h);
 }
 

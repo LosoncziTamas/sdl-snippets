@@ -10,16 +10,23 @@
 #define Font_hpp
 
 #include <SDL2_ttf/SDL_ttf.h>
+#include <string>
 
 class Font {
     
 public:
-    const char* path;
+    std::string path;
     int size;
     TTF_Font *sdlFont;
     
-    Font(const char* path, int size);
+    Font(const std::string &path, int size);
+    Font(const Font& other);
+    Font(Font&& other);
+    Font &operator=(Font other);
     ~Font();
+    
+    friend void swap(Font& first, Font& second);
+
 };
 
 #endif /* Font_hpp */

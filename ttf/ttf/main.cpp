@@ -4,6 +4,7 @@
 #include "FontManager.hpp"
 #include "Renderer.hpp"
 
+
 int main(void) {
 
     SDL_Init(SDL_INIT_VIDEO);
@@ -21,11 +22,17 @@ int main(void) {
     
     SDL_bool running = SDL_TRUE;
     
-    Font *font = FontManager::getFont();
-    Texture texture = renderer.createTexture(*font, "Hello", {0, 0, 0, 0});
+    SDL_Color black = {0, 0, 0, 0};
+    
+    Font *font = FontManager::getFontBySize(16);
+    Font *font2 = FontManager::getFontBySize(32);
+    
+    Texture texture = renderer.createTexture(font, "Hello", black);
+    Texture texture2 = renderer.createTexture(font2, "Other Hello", black);
     
     renderer.clear();
     renderer.drawText(100, 100, texture);
+    renderer.drawText(500, 100, texture2);
     renderer.update();
     
     while (running)

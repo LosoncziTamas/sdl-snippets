@@ -21,7 +21,7 @@ public:
     void drawText(int x, int y, const Texture &fontTexture);
     void clear();
     void update();
-    Texture createTexture(const Font &font, const char *text, const SDL_Color &color);
+    Texture createTexture(const Font *font, const char *text, const SDL_Color &color);
     
 private:
     SDL_Renderer *sdlRenderer;
