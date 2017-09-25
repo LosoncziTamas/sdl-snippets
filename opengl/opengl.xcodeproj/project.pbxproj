@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E92D61FF1F7543000097D1F4 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E92D61FE1F7543000097D1F4 /* main.cpp */; };
+		E9223A951F79060C0019D694 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E9223A941F79060C0019D694 /* main.cpp */; };
+		E92D61FF1F7543000097D1F4 /* legacy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E92D61FE1F7543000097D1F4 /* legacy.cpp */; };
 		E92D62061F7544230097D1F4 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E92D62051F7544230097D1F4 /* SDL2.framework */; };
 		E92D62091F754D170097D1F4 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E92D62071F754D170097D1F4 /* GLUT.framework */; };
 		E92D620A1F754D170097D1F4 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E92D62081F754D170097D1F4 /* OpenGL.framework */; };
@@ -27,8 +28,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E9223A941F79060C0019D694 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E92D61FB1F7543000097D1F4 /* opengl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = opengl; sourceTree = BUILT_PRODUCTS_DIR; };
-		E92D61FE1F7543000097D1F4 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		E92D61FE1F7543000097D1F4 /* legacy.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = legacy.cpp; sourceTree = "<group>"; };
 		E92D62051F7544230097D1F4 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
 		E92D62071F754D170097D1F4 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../../System/Library/Frameworks/GLUT.framework; sourceTree = "<group>"; };
 		E92D62081F754D170097D1F4 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = ../../../../System/Library/Frameworks/OpenGL.framework; sourceTree = "<group>"; };
@@ -72,9 +74,10 @@
 		E92D61FD1F7543000097D1F4 /* opengl */ = {
 			isa = PBXGroup;
 			children = (
-				E92D61FE1F7543000097D1F4 /* main.cpp */,
+				E92D61FE1F7543000097D1F4 /* legacy.cpp */,
 				E96B11A21F76B95000274FCC /* glextension.cpp */,
 				E96B11A31F76B95000274FCC /* glextension.hpp */,
+				E9223A941F79060C0019D694 /* main.cpp */,
 			);
 			path = opengl;
 			sourceTree = "<group>";
@@ -136,7 +139,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				E96B11A41F76B95000274FCC /* glextension.cpp in Sources */,
-				E92D61FF1F7543000097D1F4 /* main.cpp in Sources */,
+				E92D61FF1F7543000097D1F4 /* legacy.cpp in Sources */,
+				E9223A951F79060C0019D694 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

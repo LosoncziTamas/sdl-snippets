@@ -58,6 +58,9 @@ GLGENERATEMIPMAPFN glGenerateMipmap = NULL;
 GLDRAWELEMENTSINSTANCEDFN glDrawElementsInstanced = NULL;
 GLPATCHPARAMETERIFN glPatchParameteri = NULL;
 GLPATCHPARAMETERFVFN glPatchParameterfv = NULL;
+GLVALIDATEPROGRAMFN glValidateProgram = NULL;
+GLGENVERTEXARRAYSFN glGenVertexArrays = NULL;
+GLBINDVERTEXARRAYFN glBindVertexArray = NULL;
 
 GLBROKENEXTENSIONFN glBrokenExtension = NULL;
 
@@ -84,6 +87,7 @@ void SDL_GL_LoadExtensions() {
     SDL_GL_LoadExtension(GLUSEPROGRAMFN, glUseProgram);
     SDL_GL_LoadExtension(GLGETPROGRAMIVFN, glGetProgramiv);
     SDL_GL_LoadExtension(GLPROGRAMPARAMETERIFN, glProgramParameteri);
+    SDL_GL_LoadExtension(GLVALIDATEPROGRAMFN, glValidateProgram);
     
     SDL_GL_LoadExtension(GLCREATESHADERFN, glCreateShader);
     SDL_GL_LoadExtension(GLSHADERSOURCEFN, glShaderSource);
@@ -117,6 +121,8 @@ void SDL_GL_LoadExtensions() {
     SDL_GL_LoadExtension(GLENABLEVERTEXATTRIBARRAYFN, glEnableVertexAttribArray);
     SDL_GL_LoadExtension(GLDISABLEVERTEXATTRIBARRAYFN, glDisableVertexAttribArray);
     SDL_GL_LoadExtension(GLBINDATTRIBLOCATIONFN, glBindAttribLocation);
+    SDL_GL_LoadExtension(GLGENVERTEXARRAYSFN, glGenVertexArrays);
+    SDL_GL_LoadExtension(GLBINDVERTEXARRAYFN, glBindVertexArray);
     
     /* Textures */
     
@@ -155,5 +161,4 @@ void SDL_GL_LoadExtensions() {
     
     SDL_GL_LoadExtension(GLDRAWELEMENTSINSTANCEDFN, glDrawElementsInstanced);
     
-
 }

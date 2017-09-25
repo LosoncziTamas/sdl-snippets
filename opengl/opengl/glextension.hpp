@@ -67,9 +67,13 @@ typedef void (APIENTRY * GLTEXIMAGE3DFN)(GLenum target, GLint level, GLint inter
 typedef void (APIENTRY * GLDRAWELEMENTSINSTANCEDFN)(GLenum mode, GLsizei count, GLenum type, const void* indicies, GLsizei primcount);
 typedef void (APIENTRY * GLPATCHPARAMETERIFN)(GLenum pname, GLint value);
 typedef void (APIENTRY * GLPATCHPARAMETERFVFN)(GLenum pname, const GLfloat* values);
+typedef void (APIENTRY * GLVALIDATEPROGRAMFN)(GLuint program);
+typedef void (APIENTRY * GLGENVERTEXARRAYSFN)(GLsizei n, GLuint *arrays);
+typedef void (APIENTRY * GLBINDVERTEXARRAYFN)(GLuint array);
 
 typedef void (APIENTRY * GLBROKENEXTENSIONFN)();
 
+extern GLVALIDATEPROGRAMFN glValidateProgram;
 extern GLCREATESHADERFN glCreateShader;
 extern GLCREATEPROGRAMFN glCreateProgram;
 extern GLSHADERSOURCEFN glShaderSource;
@@ -91,6 +95,8 @@ extern GLVERTEXATTRIBPOINTERFN glVertexAttribPointer;
 extern GLVERTEXATTRIBDIVISORFN glVertexAttribDivisor;
 extern GLENABLEVERTEXATTRIBARRAYFN glEnableVertexAttribArray;
 extern GLDISABLEVERTEXATTRIBARRAYFN glDisableVertexAttribArray;
+extern GLGENVERTEXARRAYSFN glGenVertexArrays;
+extern GLBINDVERTEXARRAYFN glBindVertexArray;
 extern GLUNIFORM2FFN glUniform2f;
 extern GLUNIFORM3FFN glUniform3f;
 extern GLUNIFORM4FFN glUniform4f;
