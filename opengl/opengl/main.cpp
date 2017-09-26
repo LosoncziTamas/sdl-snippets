@@ -6,9 +6,20 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-const char *vertexShader = "#version 330 core layout (location = 0) in vec3 aPos; void main() { gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0); }";
-
-const char *fragmentShader = "#version 330 core out vec4 FragColor; void main() { FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f); } ";
+std::string loadShaderSource(const char* filePath) {
+    FILE *file = fopen(filePath, "rt");
+    fseek(file, 0, SEEK_END);
+    unsigned long length = ftell(file);
+    char *data = new char[length + 1];
+    memset(data, 0, length + 1);
+    fseek(file, 0, SEEK_SET);
+    fread(data, 1, length, file);
+    fclose(file);
+    
+    std::string result(data);
+    delete[] data;
+    return result;
+}
 
 int main(void) {
     
@@ -63,6 +74,8 @@ int main(void) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
+    const char *vertexShader = loadShaderSource("shader.vert").c_str();
+    
     GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vertexShader, NULL);
     glCompileShader(vertex);
@@ -79,6 +92,8 @@ int main(void) {
         glDeleteShader(vertex);
         return 0;
     }
+    
+    const char *fragmentShader = loadShaderSource("shader.frag").c_str();
     
     GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment, 1, &fragmentShader, NULL);

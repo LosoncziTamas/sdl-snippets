@@ -36,6 +36,8 @@
 		E92D62081F754D170097D1F4 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = ../../../../System/Library/Frameworks/OpenGL.framework; sourceTree = "<group>"; };
 		E96B11A21F76B95000274FCC /* glextension.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glextension.cpp; sourceTree = "<group>"; };
 		E96B11A31F76B95000274FCC /* glextension.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = glextension.hpp; sourceTree = "<group>"; };
+		E9BC9C541F7A46BD0096E855 /* shader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = shader.frag; sourceTree = "<group>"; };
+		E9BC9C551F7A46C80096E855 /* shader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = shader.vert; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +80,8 @@
 				E96B11A21F76B95000274FCC /* glextension.cpp */,
 				E96B11A31F76B95000274FCC /* glextension.hpp */,
 				E9223A941F79060C0019D694 /* main.cpp */,
+				E9BC9C541F7A46BD0096E855 /* shader.frag */,
+				E9BC9C551F7A46C80096E855 /* shader.vert */,
 			);
 			path = opengl;
 			sourceTree = "<group>";
