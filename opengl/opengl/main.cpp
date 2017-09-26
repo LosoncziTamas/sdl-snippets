@@ -6,20 +6,91 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-std::string loadShaderSource(const char* filePath) {
-    FILE *file = fopen(filePath, "rt");
-    fseek(file, 0, SEEK_END);
-    unsigned long length = ftell(file);
-    char *data = new char[length + 1];
-    memset(data, 0, length + 1);
-    fseek(file, 0, SEEK_SET);
-    fread(data, 1, length, file);
-    fclose(file);
+struct Shader {
     
-    std::string result(data);
-    delete[] data;
-    return result;
-}
+    GLuint programId;
+    
+    Shader(const char* vertexPath, const char* fragmentPath) {
+        programId = load(vertexPath, fragmentPath);
+    }
+    
+    GLuint load(const char* vertexPath, const char* fragmentPath) {
+        
+        GLuint program = glCreateProgram();
+        
+        std::string vertexSrc = loadShaderSource(vertexPath);
+        const char *vertexSrc_c = vertexSrc.c_str();
+        
+        GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertex, 1, &vertexSrc_c, NULL);
+        glCompileShader(vertex);
+        
+        GLint result;
+        glGetShaderiv(vertex, GL_COMPILE_STATUS, &result);
+        if (result == GL_FALSE)
+        {
+            GLint length;
+            glGetShaderiv(vertex, GL_INFO_LOG_LENGTH, &length);
+            std::vector<char> error(length);
+            glGetShaderInfoLog(vertex, length, &length, &error[0]);
+            std::cout << "Failed to compile vertex shader!" << std::endl << &error[0] << std::endl;
+            glDeleteShader(vertex);
+            return 0;
+        }
+        glAttachShader(program, vertex);
+        
+        std::string fragmentSrc = loadShaderSource(fragmentPath);
+        const char *fragmentSrc_c = fragmentSrc.c_str();
+
+        GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment, 1, &fragmentSrc_c, NULL);
+        glCompileShader(fragment);
+        glGetShaderiv(fragment, GL_COMPILE_STATUS, &result);
+        if (result == GL_FALSE)
+        {
+            GLint length;
+            glGetShaderiv(fragment, GL_INFO_LOG_LENGTH, &length);
+            std::vector<char> error(length);
+            glGetShaderInfoLog(fragment, length, &length, &error[0]);
+            std::cout << "Failed to compile fragment shader!" << std::endl << &error[0] << std::endl;
+            glDeleteShader(fragment);
+            return 0;
+        }
+        glAttachShader(program, fragment);
+        
+        glLinkProgram(program);
+        glValidateProgram(program);
+        
+        glDeleteShader(vertex);
+        glDeleteShader(fragment);
+        
+        return program;
+    }
+    
+    void bind() {
+        glUseProgram(programId);
+    }
+    
+    void unbind() {
+        glUseProgram(0);
+    }
+    
+    std::string loadShaderSource(const char* filePath) {
+        FILE *file = fopen(filePath, "rt");
+        fseek(file, 0, SEEK_END);
+        unsigned long length = ftell(file);
+        char *data = new char[length + 1];
+        memset(data, 0, length + 1);
+        fseek(file, 0, SEEK_SET);
+        fread(data, 1, length, file);
+        fclose(file);
+        
+        std::string result(data);
+        delete[] data;
+        return result;
+    }
+    
+};
 
 int main(void) {
     
@@ -74,53 +145,7 @@ int main(void) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
-    const char *vertexShader = loadShaderSource("shader.vert").c_str();
-    
-    GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vertexShader, NULL);
-    glCompileShader(vertex);
-    
-    GLint result;
-    glGetShaderiv(vertex, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-        GLint length;
-        glGetShaderiv(vertex, GL_INFO_LOG_LENGTH, &length);
-        std::vector<char> error(length);
-        glGetShaderInfoLog(vertex, length, &length, &error[0]);
-        std::cout << "Failed to compile vertex shader!" << std::endl << &error[0] << std::endl;
-        glDeleteShader(vertex);
-        return 0;
-    }
-    
-    const char *fragmentShader = loadShaderSource("shader.frag").c_str();
-    
-    GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fragmentShader, NULL);
-    glCompileShader(fragment);
-    
-    glGetShaderiv(fragment, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-        GLint length;
-        glGetShaderiv(fragment, GL_INFO_LOG_LENGTH, &length);
-        std::vector<char> error(length);
-        glGetShaderInfoLog(fragment, length, &length, &error[0]);
-        std::cout << "Failed to compile fragment shader!" << std::endl << &error[0] << std::endl;
-        glDeleteShader(fragment);
-        return 0;
-    }
-    
-    GLuint program = glCreateProgram();
-    
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
-    glValidateProgram(program);
-    glUseProgram(program);
-    
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
+    Shader shader("shader.vert", "shader.frag");
     
     bool quit = false;
     
@@ -135,7 +160,7 @@ int main(void) {
         }
         glClearColor(0.0f, 1.0f, 1.0f, 0.5f);
         glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(program);
+        shader.bind();
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         
