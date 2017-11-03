@@ -1,7 +1,4 @@
-#include <iostream>
-#include <dlfcn.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #include "game.h"
 
@@ -38,19 +35,19 @@ bool load_app_dll(Game_Code* app_dll, const char *src_dll_path)
     else
     {
         if (app_dll->dll)
-        {
-            dlclose(app_dll->dll);
+        {            
+            SDL_UnloadObject(app_dll->dll);
             app_dll->dll = 0;
         }
-    }
-    void *lib = dlopen(src_dll_path, RTLD_LOCAL | RTLD_LAZY);
+    }    
+    void *lib = SDL_LoadObject(src_dll_path);
     if (!lib)
     {
         return false;
     }
     
     app_dll->dll = lib;
-    app_dll->update = (game_update_fn)dlsym(lib, "game_update");
+    app_dll->update = (game_update_fn)SDL_LoadFunction(lib, "game_update");
     app_dll->last_load_time = last_write_time;
     return true;
 }
@@ -130,7 +127,7 @@ int main(void)
             app_dll.update(&buffer);
         }
     }
-    
+    free(buffer.bitmap_memory);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
