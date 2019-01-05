@@ -4,7 +4,11 @@
 int main(void)
 {
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, 0);
+    SDL_Window* window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_ALWAYS_ON_TOP);
+    
+    SDL_version version;
+    SDL_VERSION(&version);
+    SDL_Log("SDL %d.%d.%d", version.major, version.minor, version.patch);
     
     if (window)
     {
@@ -20,6 +24,7 @@ int main(void)
                     }
                 }
             }
+
         }
         SDL_DestroyWindow(window);
     }
