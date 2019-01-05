@@ -1,5 +1,0 @@
-{
-    "cppcheck.lintingEnabled": true,
-    "cppcheck.enable": true,
-    "cppcheck.showStatusBarItem" : true
-}

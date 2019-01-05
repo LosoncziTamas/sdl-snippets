@@ -1,7 +1,0 @@
-build
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcworkspace/contents.xcworkspacedata
-/*.gcno
-DerivedData/
-
